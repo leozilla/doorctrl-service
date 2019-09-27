@@ -33,7 +33,16 @@ public class Service {
         LOG.info("Event ID Class: {}", idClass);
         LOG.info("Relay IP Address: {}", relayIp);
         LOG.info("Base URL: {}", baseUrl);
-        LOG.info("Authorization Key: {}", authorizationKey.length() > 0 ? "<Not empty>" : "<Empty!>");
+
+        if (baseUrl.isEmpty()) {
+            LOG.fatal("Base URL is empty");
+            System.exit(10);
+        }
+
+        if (authorizationKey.isEmpty()) {
+            LOG.fatal("Authorization key is empty");
+            System.exit(11);
+        }
 
         final Thread.UncaughtExceptionHandler handler = (thread, throwable) -> LOG.fatal("Thread terminated", throwable);
         final Executor eventLoop = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
