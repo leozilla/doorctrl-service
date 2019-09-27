@@ -9,10 +9,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Properties;
+import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,16 +20,16 @@ public class Service {
     private static final Logger LOG = LogManager.getLogger();
 
     public static void main(final String args[]) throws IOException {
+        LOG.info("Program args {}", Arrays.asList(args));
+
         final String idClass = args[1];
         final String relayIp = args[2];
 
-        final Properties prop = new Properties();
-        prop.load(new FileInputStream("config.properties"));
+        ApplicationProperties.INSTANCE.load();
 
-        final String baseUrl = prop.getProperty("base-url");
-        final String authorizationKey = prop.getProperty("authorization-key");
+        final String baseUrl = ApplicationProperties.INSTANCE.getBaseUrl();
+        final String authorizationKey = ApplicationProperties.INSTANCE.getAuthorizationKey();
 
-        LOG.info("Starting service with config");
         LOG.info("Event ID Class: {}", idClass);
         LOG.info("Relay IP Address: {}", relayIp);
         LOG.info("Base URL: {}", baseUrl);
