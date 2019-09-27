@@ -1,6 +1,7 @@
 package at.mechatron.doorctrlservice.facerecognition;
 
 import at.mechatron.doorctrlservice.facerecognition.safrapi.FaceRecognitionEvent;
+import com.google.api.client.util.Sets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -9,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static com.google.common.collect.Sets.*;
 import static org.mockito.Mockito.*;
 
 class PollingFaceRecognitionServiceTest {
@@ -31,7 +33,7 @@ class PollingFaceRecognitionServiceTest {
         List<FaceRecognitionEvent> events = Arrays.asList(ev1);
         this.sut.handleEvents(events);
 
-        verify(handler).onFaceRecognized("1");
+        verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
         verifyNoMoreInteractions(handler);
     }
 
@@ -43,8 +45,10 @@ class PollingFaceRecognitionServiceTest {
         events = Arrays.asList(createEvent("1", 0));
         this.sut.handleEvents(events);
 
-        verify(handler, times(1)).onFaceRecognized("1");
-        verifyNoMoreInteractions(handler);
+        InOrder order = inOrder(handler);
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet());
+        order.verifyNoMoreInteractions();
     }
 
     @Test
@@ -56,8 +60,9 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognized("1");
-        order.verify(handler).onFaceLost("1");
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet("1"));
+        order.verifyNoMoreInteractions();
     }
 
     @Test
@@ -72,8 +77,9 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognized("1");
-        order.verify(handler, times(1)).onFaceLost("1");
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet("1"));
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet());
     }
 
     @Test
@@ -91,11 +97,11 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognized("1");
-        order.verify(handler).onFaceRecognized("2");
-        order.verify(handler).onFaceLost("1");
-        order.verify(handler).onFaceRecognized("1");
-        order.verify(handler).onFaceLost("2");
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet("2"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet("1"));
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("2"));
+        order.verifyNoMoreInteractions();
     }
 
     private FaceRecognitionEvent createEvent(final String personId, final long endTime) {

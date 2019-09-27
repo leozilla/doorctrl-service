@@ -30,16 +30,8 @@ public class WatchDog {
     public void watch() {
         LOG.info("Started watch dog");
 
-        this.faceRecognitionService.register(new FaceRecognitionService.Handler() {
-            @Override
-            public void onFaceRecognized(String personId) {
+        this.faceRecognitionService.register((personsNewInView, personsNowOutOfView) -> {
 
-            }
-
-            @Override
-            public void onFaceLost(String personId) {
-
-            }
         });
     }
 }
