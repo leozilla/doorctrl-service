@@ -62,7 +62,7 @@ public class Service {
                 .build());
         final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
                 .setDaemon(false)
-                .setNameFormat("FaceRecognitionService Scheduler")
+                .setNameFormat("Scheduler")
                 .setUncaughtExceptionHandler(handler)
                 .build());
 
@@ -72,7 +72,7 @@ public class Service {
                 scheduler,
                 eventLoop);
 
-        final WatchDog watchDog = new WatchDog(doorControlClient, faceRecognitionService, eventLoop);
+        final WatchDog watchDog = new WatchDog(doorControlClient, faceRecognitionService, scheduler, eventLoop);
         watchDog.watch();
     }
 }

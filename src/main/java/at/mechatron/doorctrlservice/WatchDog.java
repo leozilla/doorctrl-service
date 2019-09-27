@@ -7,17 +7,23 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class WatchDog {
     private static final Logger LOG = LogManager.getLogger();
 
     private final DoorControlClient doorControlClient;
     private final FaceRecognitionService faceRecognitionService;
+    private final ScheduledExecutorService scheduler;
     private final Executor eventLoop;
 
-    public WatchDog(final DoorControlClient doorControlClient, final FaceRecognitionService faceRecognitionService, final Executor eventLoop) {
+    public WatchDog(final DoorControlClient doorControlClient,
+                    final FaceRecognitionService faceRecognitionService,
+                    final ScheduledExecutorService scheduler,
+                    final Executor eventLoop) {
         this.doorControlClient = doorControlClient;
         this.faceRecognitionService = faceRecognitionService;
+        this.scheduler = scheduler;
         this.eventLoop = eventLoop;
     }
 
@@ -26,12 +32,12 @@ public class WatchDog {
 
         this.faceRecognitionService.register(new FaceRecognitionService.Handler() {
             @Override
-            public void onFaceRecognized(String personId, Instant startTime) {
+            public void onFaceRecognized(String personId) {
 
             }
 
             @Override
-            public void onFaceLost(String personId, Instant endTime) {
+            public void onFaceLost(String personId) {
 
             }
         });

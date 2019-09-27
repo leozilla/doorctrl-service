@@ -2,16 +2,16 @@ package at.mechatron.doorctrlservice.facerecognition;
 
 import at.mechatron.doorctrlservice.facerecognition.safrapi.FaceRecognitionEvent;
 import at.mechatron.doorctrlservice.facerecognition.safrapi.SafrClient;
+import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class PollingFaceRecognitionService implements FaceRecognitionService {
     private static final Logger LOG = LogManager.getLogger();
@@ -20,17 +20,7 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
     private final SafrClient safrClient;
     private final Executor eventLoop;
 
-    private final Map<String, PersonInView> personsInFieldOfView = new HashMap<>();
-    private final Map<String, PersonOutOfView> personsOutOfFieldOfView = new HashMap<>();
-
-    private static final class PersonInView {
-
-    }
-
-    private static final class PersonOutOfView {
-
-    }
-
+    private Set<String> personsInViewPreviously = new HashSet<>();
     private Instant lastPollTime = Instant.MIN;
     private Handler handler;
 
@@ -56,9 +46,23 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
         safrClient.getEvents(sinceTime).thenAcceptAsync(this::handleEvents, eventLoop);
     }
 
-    private void handleEvents(final List<FaceRecognitionEvent> faceRecognitionEvents) {
+    void handleEvents(final List<FaceRecognitionEvent> faceRecognitionEvents) {
         LOG.debug("Got {} face recognition events", faceRecognitionEvents.size());
 
+        List<FaceRecognitionEvent> sortedEvents = faceRecognitionEvents.stream()
+                .sorted(Comparator.comparing(FaceRecognitionEvent::getStartTime))
+                .collect(Collectors.toList());
 
+        Set<String> currentPersonsInView = sortedEvents.stream()
+                .filter(p -> p.isInView())
+                .map(p -> p.getPersonId())
+                .collect(Collectors.toSet());
+        Set<String> personsNewInView = Sets.difference(currentPersonsInView, personsInViewPreviously);
+        Set<String> personsNowOutOfView = Sets.difference(personsInViewPreviously, currentPersonsInView);
+
+        personsNewInView.forEach(p -> this.handler.onFaceRecognized(p));
+        personsNowOutOfView.forEach(p -> this.handler.onFaceLost(p));
+
+        this.personsInViewPreviously = currentPersonsInView;
     }
 }

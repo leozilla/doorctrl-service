@@ -1,12 +1,10 @@
 package at.mechatron.doorctrlservice.facerecognition;
 
-import java.time.Instant;
-
 public interface FaceRecognitionService {
 
     interface Handler {
-        void onFaceRecognized(String personId, Instant startTime);
-        void onFaceLost(String personId, Instant endTime);
+        void onFaceRecognized(String personId);
+        void onFaceLost(String personId);
     }
 
     void register(final Handler handler);
