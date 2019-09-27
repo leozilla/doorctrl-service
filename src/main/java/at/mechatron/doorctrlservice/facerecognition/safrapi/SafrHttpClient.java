@@ -44,7 +44,7 @@ public class SafrHttpClient implements SafrClient {
     }
 
     public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant startTime) {
-        GenericUrl url = new GenericUrl(String.format("%s?sinceTime=%d", EVENTS_URL, startTime.toEpochMilli()));
+        GenericUrl url = new GenericUrl(String.format("%s/events?sinceTime=%d", EVENTS_URL, startTime.toEpochMilli()));
 
         LOG.debug("HTTP GET {}", url);
 

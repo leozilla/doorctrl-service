@@ -49,9 +49,9 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
 
     private void pollNow() {
         Instant sinceTime = lastPollTime == Instant.MIN ? Instant.now().minusSeconds(3) : lastPollTime;
-        LOG.debug("Polling for face recognition events. Last poll time: {}, since time: {}", lastPollTime, sinceTime);
-
         lastPollTime = Instant.now();
+
+        LOG.debug("Polling for face recognition events. Last poll time/used since time: {}", sinceTime);
 
         safrClient.getEvents(sinceTime).thenAcceptAsync(this::handleEvents, eventLoop);
     }
