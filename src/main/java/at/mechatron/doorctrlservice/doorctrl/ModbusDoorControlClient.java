@@ -31,10 +31,12 @@ public class ModbusDoorControlClient implements DoorControlClient {
     }
 
     public CompletableFuture<Void> lockDoor() {
+        LOG.debug("Locking door");
         return sendRequest(1);
     }
 
     public CompletableFuture<Void> unlockDoor() {
+        LOG.debug("Unlocking door");
         return sendRequest(0);
     }
 

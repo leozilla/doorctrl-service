@@ -31,6 +31,7 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
 
     }
 
+    private Instant lastPollTime = Instant.MIN;
     private Handler handler;
 
     public PollingFaceRecognitionService(final SafrClient safrClient, final ScheduledExecutorService scheduler, final Executor eventLoop) {
@@ -47,12 +48,17 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
     }
 
     private void pollNow() {
-        LOG.debug("Polling for face recognition events");
+        Instant sinceTime = lastPollTime == Instant.MIN ? Instant.now().minusSeconds(3) : lastPollTime;
+        LOG.debug("Polling for face recognition events. Last poll time: {}, since time: {}", lastPollTime, sinceTime);
 
-        safrClient.getEvents(Instant.now()).thenAcceptAsync(this::handleEvents, eventLoop);
+        lastPollTime = Instant.now();
+
+        safrClient.getEvents(sinceTime).thenAcceptAsync(this::handleEvents, eventLoop);
     }
 
     private void handleEvents(final List<FaceRecognitionEvent> faceRecognitionEvents) {
         LOG.debug("Got {} face recognition events", faceRecognitionEvents.size());
+
+
     }
 }

@@ -1,5 +1,6 @@
 package at.mechatron.doorctrlservice.facerecognition.safrapi;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -18,7 +19,8 @@ public class SafrHttpClient implements SafrClient {
 
     private static final String RPC_AUTHORIZATION_HEADER = "X-RPC-AUTHORIZATION";
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private final URI EVENTS_URL;
     private final HttpRequestFactory httpRequestFactory;
@@ -43,6 +45,8 @@ public class SafrHttpClient implements SafrClient {
 
     public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant startTime) {
         GenericUrl url = new GenericUrl(String.format("%s?sinceTime=%d", EVENTS_URL, startTime.toEpochMilli()));
+
+        LOG.debug("HTTP GET {}", url);
 
         return CompletableFuture.supplyAsync(() -> {
             try {
