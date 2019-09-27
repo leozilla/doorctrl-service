@@ -1,11 +1,12 @@
 package at.mechatron.doorctrlservice.facerecognition;
 
 import at.mechatron.doorctrlservice.facerecognition.safrapi.FaceRecognitionEvent;
-import at.mechatron.doorctrlservice.facerecognition.safrapi.SafrClient;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.SAFRClient;
 import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Executor;
@@ -16,15 +17,21 @@ import java.util.stream.Collectors;
 public class PollingFaceRecognitionService implements FaceRecognitionService {
     private static final Logger LOG = LogManager.getLogger();
 
+    private final Duration pollInterval;
     private final ScheduledExecutorService scheduler;
-    private final SafrClient safrClient;
+    private final SAFRClient safrClient;
     private final Executor eventLoop;
 
     private Set<String> personsInViewPreviously = new HashSet<>();
     private Instant lastPollTime = Instant.MIN;
     private Handler handler;
 
-    public PollingFaceRecognitionService(final SafrClient safrClient, final ScheduledExecutorService scheduler, final Executor eventLoop) {
+    public PollingFaceRecognitionService(
+            final Duration pollInterval,
+            final SAFRClient safrClient,
+            final ScheduledExecutorService scheduler,
+            final Executor eventLoop) {
+        this.pollInterval = pollInterval;
         this.scheduler = scheduler;
         this.safrClient = safrClient;
         this.eventLoop = eventLoop;
@@ -34,7 +41,7 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
     public void register(final Handler handler) {
         this.handler = handler;
 
-        this.scheduler.scheduleAtFixedRate(this::pollNow, 0, 3, TimeUnit.SECONDS);
+        this.scheduler.scheduleAtFixedRate(() -> eventLoop.execute(this::pollNow), 0, pollInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private void pollNow() {
@@ -43,11 +50,15 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
 
         LOG.debug("Polling for face recognition events. Last poll time/used since time: {}", sinceTime);
 
-        safrClient.getEvents(sinceTime).thenAcceptAsync(this::handleEvents, eventLoop);
+        safrClient.getEvents(sinceTime).whenCompleteAsync((faceRecognitionEvents, throwable) -> {
+            if (throwable == null) {
+                this.handleEvents(faceRecognitionEvents);
+            }
+        }, eventLoop);
     }
 
     void handleEvents(final List<FaceRecognitionEvent> faceRecognitionEvents) {
-        LOG.debug("Got {} face recognition events", faceRecognitionEvents.size());
+        LOG.debug("Got {} face recognition event(s)", faceRecognitionEvents.size());
 
         List<FaceRecognitionEvent> sortedEvents = faceRecognitionEvents.stream()
                 .sorted(Comparator.comparing(FaceRecognitionEvent::getStartTime))

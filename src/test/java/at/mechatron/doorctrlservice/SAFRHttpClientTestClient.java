@@ -1,6 +1,6 @@
 package at.mechatron.doorctrlservice;
 
-import at.mechatron.doorctrlservice.facerecognition.safrapi.SafrHttpClient;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.SAFRHttpClient;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -15,7 +15,7 @@ public class SAFRHttpClientTestClient {
         final String authorizationKey = args[1];
         final String idClass = args[2];
 
-        SafrHttpClient client = new SafrHttpClient(baseUrl, authorizationKey, Duration.ofSeconds(3), Executors.newSingleThreadExecutor());
+        SAFRHttpClient client = new SAFRHttpClient(baseUrl, authorizationKey, Duration.ofSeconds(3), Executors.newSingleThreadExecutor());
         Scanner scanner = new Scanner(System.in);
 
         while (true) {

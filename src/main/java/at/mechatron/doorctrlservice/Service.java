@@ -4,7 +4,7 @@ import at.mechatron.doorctrlservice.doorctrl.DoorControlClient;
 import at.mechatron.doorctrlservice.doorctrl.ModbusDoorControlClient;
 import at.mechatron.doorctrlservice.facerecognition.FaceRecognitionService;
 import at.mechatron.doorctrlservice.facerecognition.PollingFaceRecognitionService;
-import at.mechatron.doorctrlservice.facerecognition.safrapi.SafrHttpClient;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.SAFRHttpClient;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,10 +29,14 @@ public class Service {
 
         final String baseUrl = ApplicationProperties.INSTANCE.getBaseUrl();
         final String authorizationKey = ApplicationProperties.INSTANCE.getAuthorizationKey();
+        final Duration doorLockDuration = ApplicationProperties.INSTANCE.getDoorLockDuration().orElse(Duration.ofMinutes(2));
+        final Duration httpPollInterval = ApplicationProperties.INSTANCE.getHttpPoolInterval().orElse(Duration.ofMillis(1500));
 
         LOG.info("Event ID Class: {}", idClass);
         LOG.info("Relay IP Address: {}", relayIp);
         LOG.info("Base URL: {}", baseUrl);
+        LOG.info("Door lock duration: {}", doorLockDuration);
+        LOG.info("HTTP poll interval: {}", doorLockDuration);
 
         if (baseUrl.isEmpty()) {
             LOG.fatal("Base URL is empty");
@@ -68,11 +72,12 @@ public class Service {
 
         final DoorControlClient doorControlClient = new ModbusDoorControlClient(relayIp, modbusIOExecutor);
         final FaceRecognitionService faceRecognitionService = new PollingFaceRecognitionService(
-                new SafrHttpClient(baseUrl, authorizationKey, Duration.ofSeconds(3), safrHttpIOExecutor),
+                httpPollInterval,
+                new SAFRHttpClient(baseUrl, authorizationKey, httpPollInterval, safrHttpIOExecutor),
                 scheduler,
                 eventLoop);
 
-        final WatchDog watchDog = new WatchDog(doorControlClient, faceRecognitionService, scheduler, eventLoop);
+        final WatchDog watchDog = new WatchDog(doorLockDuration, doorControlClient, faceRecognitionService, scheduler, eventLoop);
         watchDog.watch();
     }
 }

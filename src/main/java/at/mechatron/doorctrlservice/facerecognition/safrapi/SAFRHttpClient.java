@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.*;
 
-public class SafrHttpClient implements SafrClient {
+public class SAFRHttpClient implements SAFRClient {
     private static final Logger LOG = LogManager.getLogger();
 
     private static final String RPC_AUTHORIZATION_HEADER = "X-RPC-AUTHORIZATION";
@@ -26,7 +26,7 @@ public class SafrHttpClient implements SafrClient {
     private final HttpRequestFactory httpRequestFactory;
     private final Executor ioExecutor;
 
-    public SafrHttpClient(final String baseUrl, final String authorizationKey, final Duration timeout, final Executor ioExecutor) {
+    public SAFRHttpClient(final String baseUrl, final String authorizationKey, final Duration timeout, final Executor ioExecutor) {
         this.EVENTS_URL = URI.create(baseUrl);
         this.ioExecutor = ioExecutor;
 

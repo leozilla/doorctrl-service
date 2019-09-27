@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,7 +22,7 @@ class PollingFaceRecognitionServiceTest {
     @BeforeEach
     public void beforeEach() {
         ScheduledExecutorService executor = mock(ScheduledExecutorService.class);
-        this.sut = new PollingFaceRecognitionService(null, executor, null);
+        this.sut = new PollingFaceRecognitionService(Duration.ofSeconds(3), null, executor, null);
 
         this.handler = mock(FaceRecognitionService.Handler.class);
         this.sut.register(handler);

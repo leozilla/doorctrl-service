@@ -1,6 +1,10 @@
 package at.mechatron.doorctrlservice;
 
+import com.google.common.base.Strings;
+
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Optional;
 import java.util.Properties;
 
 public enum ApplicationProperties {
@@ -22,5 +26,19 @@ public enum ApplicationProperties {
 
     public String getAuthorizationKey() {
         return properties.getProperty("authorization-key");
+    }
+
+    public Optional<Duration> getDoorLockDuration() {
+        String property = properties.getProperty("door-lock-duration-sec");
+        return Strings.isNullOrEmpty(property)
+                ? Optional.empty()
+                : Optional.of(Duration.ofSeconds(Integer.parseInt(property)));
+    }
+
+    public Optional<Duration> getHttpPoolInterval() {
+        String property = properties.getProperty("http-poll-interval-millis");
+        return Strings.isNullOrEmpty(property)
+                ? Optional.empty()
+                : Optional.of(Duration.ofSeconds(Integer.parseInt(property)));
     }
 }

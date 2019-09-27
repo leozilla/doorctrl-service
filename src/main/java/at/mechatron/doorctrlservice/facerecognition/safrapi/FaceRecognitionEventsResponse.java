@@ -8,8 +8,4 @@ public class FaceRecognitionEventsResponse {
     public List<FaceRecognitionEvent> getEvents() {
         return events;
     }
-
-    public void setEvents(List<FaceRecognitionEvent> events) {
-        this.events = events;
-    }
 }
