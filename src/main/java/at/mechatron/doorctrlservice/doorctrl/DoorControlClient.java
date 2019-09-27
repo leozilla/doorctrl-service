@@ -1,8 +1,10 @@
 package at.mechatron.doorctrlservice.doorctrl;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface DoorControlClient {
 
-    void lockDoor();
+    CompletableFuture<Void> lockDoor();
 
-    void unlockDoor();
+    CompletableFuture<Void> unlockDoor();
 }

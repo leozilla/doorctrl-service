@@ -6,34 +6,56 @@ import com.serotonin.modbus4j.exception.ModbusTransportException;
 import com.serotonin.modbus4j.ip.IpParameters;
 import com.serotonin.modbus4j.msg.WriteRegisterRequest;
 import com.serotonin.modbus4j.msg.WriteRegisterResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 public class ModbusDoorControlClient implements DoorControlClient {
-    private final int _slaveId = 1;
-    private final ModbusMaster _master;
+    private static final Logger LOG = LogManager.getLogger();
 
-    public ModbusDoorControlClient(final String host) {
+    private static final int SLAVE_ID = 1;
+
+    private final ModbusMaster master;
+    private final Executor ioExecutor;
+
+    public ModbusDoorControlClient(final String host, final Executor ioExecutor) {
+        this.ioExecutor = ioExecutor;
+
         IpParameters ipParameters = new IpParameters();
         ipParameters.setHost(host);
 
         ModbusFactory modbusFactory = new ModbusFactory();
-        _master = modbusFactory.createTcpMaster(ipParameters, false);
+        this.master = modbusFactory.createTcpMaster(ipParameters, false);
     }
 
-    public void lockDoor() {
-        try {
-            WriteRegisterRequest request = new WriteRegisterRequest(_slaveId, 0, 1);
-            WriteRegisterResponse response = (WriteRegisterResponse) _master.send(request);
-
-            if (response.isException())
-                System.out.println("Exception response: message=" + response.getExceptionMessage());
-            else
-                System.out.println("Success");
-        }
-        catch (ModbusTransportException e) {
-        }
+    public CompletableFuture<Void> lockDoor() {
+        return sendRequest(1);
     }
 
-    public void unlockDoor() {
+    public CompletableFuture<Void> unlockDoor() {
+        return sendRequest(0);
+    }
 
+    private CompletableFuture<Void> sendRequest(final int writeValue) {
+        final String doorState = writeValue == 1 ? "LOCKED" : "UNLOCKED";
+
+        return CompletableFuture.runAsync(() -> {
+            try {
+                WriteRegisterRequest request = new WriteRegisterRequest(SLAVE_ID, 0, writeValue);
+                WriteRegisterResponse response = (WriteRegisterResponse) this.master.send(request);
+
+                if (!response.isException()) {
+                    LOG.info("Door {}", doorState);
+                } else {
+                    LOG.fatal("Modbus write error. Door could not be {}. Exception Code: {} Message: {}", doorState, response.getExceptionCode(), response.getExceptionMessage());
+                }
+            }
+            catch (ModbusTransportException e) {
+                LOG.fatal("Modbus transport failed. Door could not be {}", doorState, e);
+                throw new RuntimeException(e);
+            }
+        }, ioExecutor);
     }
 }
