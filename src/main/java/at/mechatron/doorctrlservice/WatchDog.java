@@ -46,7 +46,7 @@ public class WatchDog {
     void onFaceRecognition(final Set<String> personsInView, final Set<String> personsNewInView, final Set<String> personsNowOutOfView) {
         if (!personsInView.isEmpty()) {
             LOG.info("Registered person(s) in view: {}, Person(s) new in view: {}, LOCKING door now", personsInView, personsNewInView);
-            this.doorControlClient.lockDoor();
+            this.doorControlClient.lockDoor().exceptionally(t -> doorError("LOCK", t));
 
             if (this.scheduleUnlock != null) {
                 LOG.debug("Canceling unlock action");
@@ -61,7 +61,12 @@ public class WatchDog {
 
     private void unlockDoor() {
         LOG.info("Door lock duration: {} elapsed and no person within field of view, UNLOCKING door now", this.doorLockDuration);
-        this.doorControlClient.unlockDoor();
+        this.doorControlClient.unlockDoor().exceptionally(t -> doorError("UNLOCK", t));
         this.scheduleUnlock = null;
+    }
+
+    private Void doorError(final String status, final Throwable throwable) {
+        LOG.fatal("Door control failed when {}", status, throwable);
+        return null;
     }
 }

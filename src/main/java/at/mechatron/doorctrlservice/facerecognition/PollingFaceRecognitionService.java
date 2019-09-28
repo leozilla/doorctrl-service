@@ -53,8 +53,13 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
         safrClient.getEvents(sinceTime).whenCompleteAsync((faceRecognitionEvents, throwable) -> {
             if (throwable == null) {
                 this.handleEvents(faceRecognitionEvents);
+            } else {
+                LOG.error("Getting face recognition events failed", throwable);
             }
-        }, eventLoop);
+        }, eventLoop).exceptionally(throwable -> {
+            LOG.error("Handling face recognition events failed", throwable);
+            return null;
+        });
     }
 
     void handleEvents(final List<FaceRecognitionEvent> faceRecognitionEvents) {

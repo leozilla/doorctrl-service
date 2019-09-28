@@ -41,7 +41,7 @@ public class Service {
         LOG.info("Relay IP Address: {}", relayIp);
         LOG.info("Base URL: {}", baseUrl);
         LOG.info("Door lock duration: {}", doorLockDuration);
-        LOG.info("HTTP poll interval: {}", doorLockDuration);
+        LOG.info("HTTP poll interval: {}", httpPollInterval);
 
         if (baseUrl.isEmpty()) {
             LOG.fatal("Base URL is empty");
