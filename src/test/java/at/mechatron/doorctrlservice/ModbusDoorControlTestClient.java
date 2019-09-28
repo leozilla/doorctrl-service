@@ -16,8 +16,13 @@ public class ModbusDoorControlTestClient {
         while (true) {
             String line = scanner.nextLine();
             if (line.contains("e")) System.exit(0);
-            else if (line.contains("l")) client.lockDoor();
-            else if (line.contains("u")) client.unlockDoor();
+            else if (line.contains("l")) client.lockDoor().exceptionally(t -> doorError("LOCK", t));
+            else if (line.contains("u")) client.unlockDoor().exceptionally(t -> doorError("UNLOCK", t));
         }
+    }
+
+    private static Void doorError(final String status, final Throwable throwable) {
+        throwable.printStackTrace();
+        return null;
     }
 }
