@@ -45,7 +45,7 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
     }
 
     private void pollNow() {
-        Instant sinceTime = lastPollTime == Instant.MIN ? Instant.now().minusSeconds(3) : lastPollTime;
+        Instant sinceTime = lastPollTime == Instant.MIN ? Instant.now() : lastPollTime;
         lastPollTime = Instant.now();
 
         LOG.debug("Polling for face recognition events. Last poll time/used since time: {}", sinceTime);
@@ -66,7 +66,11 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
         LOG.debug("Got {} face recognition event(s)", faceRecognitionEvents.size());
 
         List<FaceRecognitionEvent> sortedEvents = faceRecognitionEvents.stream()
-                .sorted(Comparator.comparing(FaceRecognitionEvent::getStartTime))
+                .sorted(Comparator.comparing(FaceRecognitionEvent::getStartTime, Comparator.reverseOrder()))
+                .collect(Collectors.groupingBy(p -> p.getPersonId()))
+                .entrySet()
+                .stream()
+                .map(e -> e.getValue().iterator().next())
                 .collect(Collectors.toList());
 
         Set<String> currentPersonsInView = sortedEvents.stream()

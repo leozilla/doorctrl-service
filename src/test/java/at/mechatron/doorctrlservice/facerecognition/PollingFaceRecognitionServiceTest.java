@@ -104,7 +104,23 @@ class PollingFaceRecognitionServiceTest {
         order.verifyNoMoreInteractions();
     }
 
+    @Test
+    public void sortEventsAndTakeOnlyLatest() {
+        List<FaceRecognitionEvent> events = Arrays.asList(
+                createEvent("1", 3, 4),
+                createEvent("1", 5, 0 ),
+                createEvent("1", 1, 2));
+        this.sut.handleEvents(events);
+
+        verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet());
+        verifyNoMoreInteractions(handler);
+    }
+
     private FaceRecognitionEvent createEvent(final String personId, final long endTime) {
         return new FaceRecognitionEvent("any id", personId, 0, endTime, "any id class");
+    }
+
+    private FaceRecognitionEvent createEvent(final String personId, final long startTime, final long endTime) {
+        return new FaceRecognitionEvent("any id", personId, startTime, endTime, "any id class");
     }
 }
