@@ -40,13 +40,13 @@ public class ServiceTest {
         @Override
         public CompletableFuture<Void> lockDoor() {
             isLocked.set(true);
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
 
         @Override
         public CompletableFuture<Void> unlockDoor() {
             isLocked.set(false);
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
     }
 
@@ -73,7 +73,8 @@ public class ServiceTest {
 
     private static final Logger LOG = LogManager.getLogger(ServiceTest.class);
 
-    private static final Duration DOOR_LOCK_DURATION = Duration.ofSeconds(5);
+    private static final Duration DOOR_LOCK_DURATION = Duration.ofSeconds(3);
+    private static final int WAIT_TOLERANCE_SEC = 2;
 
     private static FakeSAFRClient safrHttpClient;
     private static WatchDog watchDog;
@@ -118,68 +119,77 @@ public class ServiceTest {
     @Test
     public void personOutOfView_shallKeepDoorLocked() throws InterruptedException {
         Instant now = Instant.now();
-        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()));
+        int inViewDurationMillis = 1500;
+        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusMillis(inViewDurationMillis).toEpochMilli()));
 
         watchDog.watch();
 
         await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
-        Thread.sleep(DOOR_LOCK_DURATION.minusSeconds(1).toMillis());
+        Thread.sleep(inViewDurationMillis); // wait for the time the person is in the view
+        Thread.sleep(DOOR_LOCK_DURATION.minusSeconds(1).toMillis()); // wait for almost the door lock duration
         assertThat(doorControlClient.isLocked(), equalTo(true));
     }
 
     @Test
-    public void personOutOfViewForLongerThanDoorLockDuration_shallUnlockDoor() {
+    public void personOutOfViewForLongerThanDoorLockDuration_shallUnlockDoor() throws InterruptedException {
         Instant now = Instant.now();
-        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()));
+        int inViewDurationMillis = 1500;
+        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusMillis(inViewDurationMillis).toEpochMilli()));
 
         watchDog.watch();
 
         await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
-        Instant lockTime = Instant.now();
-        await().atMost(DOOR_LOCK_DURATION.getSeconds() + 3, SECONDS).until(() -> !doorControlClient.isLocked());
-        Instant unlockTime = Instant.now();
-        assertThat(Duration.between(lockTime, unlockTime), greaterThanOrEqualTo(DOOR_LOCK_DURATION));
+        Thread.sleep(inViewDurationMillis); // wait for the time the person is in the view
+        assertThat(doorControlClient.isLocked(), equalTo(true));
+        await().atMost(DOOR_LOCK_DURATION.getSeconds() + WAIT_TOLERANCE_SEC, SECONDS).until(() -> !doorControlClient.isLocked());
     }
 
     @Test
     public void personComesBackIntoViewBeforeDoorLockDurationElapsed_shallKeepDoorLocked() throws InterruptedException {
         Instant now = Instant.now();
-        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()),
-                createEvent("1", now.plusSeconds(3).toEpochMilli(), 0));
+        int inViewDurationMillis = 1500;
+        safrHttpClient.events = Arrays.asList(
+                createEvent("1", now.toEpochMilli(), now.plusMillis(inViewDurationMillis).toEpochMilli()),
+                createEvent("1", now.plusMillis(inViewDurationMillis).plusSeconds(1).toEpochMilli(), 0));
 
         watchDog.watch();
 
         await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
-        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(2).toMillis());
+        Thread.sleep(inViewDurationMillis); // wait for the time the person is in the view
+        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(2).toMillis()); // wait for longer than door lock duration
         assertThat(doorControlClient.isLocked(), equalTo(true));
     }
 
     @Test
     public void twoPersonsInView_oneLeaves_shallKeepDoorLocked() throws InterruptedException {
         Instant now = Instant.now();
+        int inViewDurationMillis = 1500;
         safrHttpClient.events = Arrays.asList(
-                createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()), // person 1 leaves after 2 sec
+                createEvent("1", now.toEpochMilli(), now.plusMillis(inViewDurationMillis).toEpochMilli()), // person 1 leaves
                 createEvent("2", now.toEpochMilli(), 0)); // person 2 stays
 
         watchDog.watch();
 
         await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
-        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(2).toMillis());
+        Thread.sleep(inViewDurationMillis); // wait for the time the person is in the view
+        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(2).toMillis()); // wait for longer than door lock duration
         assertThat(doorControlClient.isLocked(), equalTo(true));
     }
 
     @Test
-    public void twoPersonsInView_bothLeave_shallUnlockDoorAfterDoorLockDuration() {
+    public void twoPersonsInView_bothLeave_shallUnlockDoorAfterDoorLockDuration() throws InterruptedException {
         Instant now = Instant.now();
-        Instant bothLeaveTime = now.plusSeconds(3);
+        int inViewDurationMillis = 3000;
         safrHttpClient.events = Arrays.asList(
                 createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()), // person 1 leaves after 2 sec
-                createEvent("2", now.toEpochMilli(), bothLeaveTime.toEpochMilli())); // person 2 leaves as well
+                createEvent("2", now.toEpochMilli(), now.plusMillis(inViewDurationMillis).toEpochMilli())); // person 2 leaves as well
 
         watchDog.watch();
 
         await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
-        await().atMost(DOOR_LOCK_DURATION.getSeconds() + 3 + 3, SECONDS).until(() -> !doorControlClient.isLocked());
+        Thread.sleep(inViewDurationMillis); // wait for the time until both person leave the view
+        assertThat(doorControlClient.isLocked(), equalTo(true));
+        await().atMost(DOOR_LOCK_DURATION.getSeconds() + WAIT_TOLERANCE_SEC, SECONDS).until(() -> !doorControlClient.isLocked());
     }
 
     @Test
@@ -193,7 +203,8 @@ public class ServiceTest {
         watchDog.watch();
 
         await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
-        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(4 + 2).toMillis());
+        Thread.sleep(3000); // wait for the time until both person leave the view
+        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(WAIT_TOLERANCE_SEC).toMillis());
         assertThat(doorControlClient.isLocked(), equalTo(true));
     }
 
