@@ -34,7 +34,7 @@ class PollingFaceRecognitionServiceTest {
         List<FaceRecognitionEvent> events = Arrays.asList(ev1);
         this.sut.handleEvents(events);
 
-        verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
+        verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet());
         verifyNoMoreInteractions(handler);
     }
 
@@ -47,8 +47,8 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
-        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet(), newHashSet());
         order.verifyNoMoreInteractions();
     }
 
@@ -61,8 +61,8 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
-        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet("1"));
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet(), newHashSet("1"));
         order.verifyNoMoreInteractions();
     }
 
@@ -78,9 +78,9 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
-        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet("1"));
-        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet(), newHashSet("1"));
+        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet(), newHashSet());
     }
 
     @Test
@@ -98,10 +98,10 @@ class PollingFaceRecognitionServiceTest {
         this.sut.handleEvents(events);
 
         InOrder order = inOrder(handler);
-        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet());
-        order.verify(handler).onFaceRecognition(newHashSet("2"), newHashSet());
-        order.verify(handler).onFaceRecognition(newHashSet(), newHashSet("1"));
-        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("2"));
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet("1", "2"), newHashSet("2"), newHashSet());
+        order.verify(handler).onFaceRecognition(newHashSet("2"), newHashSet(), newHashSet("1"));
+        order.verify(handler).onFaceRecognition(newHashSet("1"), newHashSet("1"), newHashSet("2"));
         order.verifyNoMoreInteractions();
     }
 

@@ -154,6 +154,49 @@ public class ServiceTest {
         assertThat(doorControlClient.isLocked(), equalTo(true));
     }
 
+    @Test
+    public void twoPersonsInView_oneLeaves_shallKeepDoorLocked() throws InterruptedException {
+        Instant now = Instant.now();
+        safrHttpClient.events = Arrays.asList(
+                createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()), // person 1 leaves after 2 sec
+                createEvent("2", now.toEpochMilli(), 0)); // person 2 stays
+
+        watchDog.watch();
+
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
+        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(2).toMillis());
+        assertThat(doorControlClient.isLocked(), equalTo(true));
+    }
+
+    @Test
+    public void twoPersonsInView_bothLeave_shallUnlockDoorAfterDoorLockDuration() {
+        Instant now = Instant.now();
+        Instant bothLeaveTime = now.plusSeconds(3);
+        safrHttpClient.events = Arrays.asList(
+                createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()), // person 1 leaves after 2 sec
+                createEvent("2", now.toEpochMilli(), bothLeaveTime.toEpochMilli())); // person 2 leaves as well
+
+        watchDog.watch();
+
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
+        await().atMost(DOOR_LOCK_DURATION.getSeconds() + 3 + 3, SECONDS).until(() -> !doorControlClient.isLocked());
+    }
+
+    @Test
+    public void twoPersonsInView_bothLeaveButOneComesBack_shallNotUnlockDoorAfterDoorLockDuration() throws InterruptedException {
+        Instant now = Instant.now();
+        safrHttpClient.events = Arrays.asList(
+                createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()), // person 1 leaves after 2 sec
+                createEvent("2", now.toEpochMilli(), now.plusSeconds(3).toEpochMilli()), // person 2 leaves as well after 3
+                createEvent("1", now.plusSeconds(4).toEpochMilli(), 0)); // but person 1 comes back
+
+        watchDog.watch();
+
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
+        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(4 + 2).toMillis());
+        assertThat(doorControlClient.isLocked(), equalTo(true));
+    }
+
     private FaceRecognitionEvent createEvent(final String personId, final long startTime, final long endTime) {
         return new FaceRecognitionEvent("any id", personId, startTime, endTime, "any id class");
     }

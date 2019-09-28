@@ -43,9 +43,9 @@ public class WatchDog {
         this.faceRecognitionService.register(this::onFaceRecognition);
     }
 
-    void onFaceRecognition(final Set<String> personsNewInView, final Set<String> personsNowOutOfView) {
-        if (!personsNewInView.isEmpty()) {
-            LOG.info("Registered person(s) in view: {}, LOCKING door now", personsNewInView);
+    void onFaceRecognition(final Set<String> personsInView, final Set<String> personsNewInView, final Set<String> personsNowOutOfView) {
+        if (!personsInView.isEmpty()) {
+            LOG.info("Registered person(s) in view: {}, Person(s) new in view: {}, LOCKING door now", personsInView, personsNewInView);
             this.doorControlClient.lockDoor();
 
             if (this.scheduleUnlock != null) {
@@ -53,9 +53,8 @@ public class WatchDog {
                 this.scheduleUnlock.cancel(true);
                 this.scheduleUnlock = null;
             }
-        }
-
-        if (!personsNowOutOfView.isEmpty()) {
+        } else if (!personsNowOutOfView.isEmpty()) {
+            LOG.info("Last person(s) left view: {}. Scheduling unlock in {}", personsNowOutOfView, doorLockDuration);
             this.scheduleUnlock = this.scheduler.schedule(() -> eventLoop.execute(this::unlockDoor), doorLockDuration.getSeconds(), TimeUnit.SECONDS);
         }
     }

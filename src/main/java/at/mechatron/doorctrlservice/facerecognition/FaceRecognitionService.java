@@ -5,7 +5,7 @@ import java.util.Set;
 public interface FaceRecognitionService {
 
     interface Handler {
-        void onFaceRecognition(Set<String> personsNewInView, Set<String> personsNowOutOfView);
+        void onFaceRecognition(Set<String> personsInView, Set<String> personsNewInView, Set<String> personsNowOutOfView);
     }
 
     void register(final Handler handler);
