@@ -27,8 +27,8 @@ public class Service {
             System.exit(10);
         }
 
-        final String idClass = args[1];
-        final String relayIp = args[2];
+        final String idClass = args[0];
+        final String relayIp = args[1];
 
         ApplicationProperties.INSTANCE.load();
 
