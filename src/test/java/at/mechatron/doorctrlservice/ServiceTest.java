@@ -16,7 +16,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -26,12 +25,10 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public class ServiceTest {
-    private static final Logger LOG = LogManager.getLogger();
 
     private static class FakeDoorControlClient implements DoorControlClient {
         private AtomicBoolean isLocked = new AtomicBoolean();
@@ -57,14 +54,26 @@ public class ServiceTest {
         public List<FaceRecognitionEvent> events;
 
         @Override
-        public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant startTime) {
+        public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant sinceTime) {
             return CompletableFuture.completedFuture(
                     events.stream()
+                            .filter(e -> e.getStartTime() < Instant.now().toEpochMilli())
                             .sorted(Comparator.comparing(e -> e.getStartTime()))
-                            .filter(e -> e.getStartTime() > startTime.toEpochMilli())
+                            .map(e -> hideEndTimeIfInFuture(e))
+                            .filter(e -> e.getEndTime() == 0 || e.getEndTime() > sinceTime.toEpochMilli())
                             .collect(Collectors.toList()));
         }
+
+        private FaceRecognitionEvent hideEndTimeIfInFuture(FaceRecognitionEvent e) {
+            return e.getEndTime() > Instant.now().toEpochMilli()
+                    ? new FaceRecognitionEvent(e.getEventId(), e.getPersonId(), e.getStartTime(), 0, e.getIdClass())
+                    : e;
+        }
     }
+
+    private static final Logger LOG = LogManager.getLogger();
+
+    private static final Duration DOOR_LOCK_DURATION = Duration.ofSeconds(5);
 
     private static FakeSAFRClient safrHttpClient;
     private static WatchDog watchDog;
@@ -93,22 +102,56 @@ public class ServiceTest {
                 scheduler,
                 eventLoop);
 
-        watchDog = new WatchDog(Duration.ofSeconds(5), doorControlClient, faceRecognitionService, scheduler, eventLoop);
+        watchDog = new WatchDog(DOOR_LOCK_DURATION, doorControlClient, faceRecognitionService, scheduler, eventLoop);
     }
 
     @Test
-    public void personInViewImmediatlyLockDoor() {
-        Instant now = Instant.now().minusSeconds(1);
+    public void personInView_shallImmediatelyLockDoor() {
+        Instant now = Instant.now();
         safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), 0));
 
         watchDog.watch();
 
-        await().atMost(5, SECONDS).until(() -> doorControlClient.isLocked());
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
     }
 
     @Test
-    public void todo() {
+    public void personOutOfView_shallKeepDoorLocked() throws InterruptedException {
+        Instant now = Instant.now();
+        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()));
+
         watchDog.watch();
+
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
+        Thread.sleep(DOOR_LOCK_DURATION.minusSeconds(1).toMillis());
+        assertThat(doorControlClient.isLocked(), equalTo(true));
+    }
+
+    @Test
+    public void personOutOfViewForLongerThanDoorLockDuration_shallUnlockDoor() {
+        Instant now = Instant.now();
+        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()));
+
+        watchDog.watch();
+
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
+        Instant lockTime = Instant.now();
+        await().atMost(DOOR_LOCK_DURATION.getSeconds() + 3, SECONDS).until(() -> !doorControlClient.isLocked());
+        Instant unlockTime = Instant.now();
+        assertThat(Duration.between(lockTime, unlockTime), greaterThanOrEqualTo(DOOR_LOCK_DURATION));
+    }
+
+    @Test
+    public void personComesBackIntoViewBeforeDoorLockDurationElapsed_shallKeepDoorLocked() throws InterruptedException {
+        Instant now = Instant.now();
+        safrHttpClient.events = Arrays.asList(createEvent("1", now.toEpochMilli(), now.plusSeconds(2).toEpochMilli()),
+                createEvent("1", now.plusSeconds(3).toEpochMilli(), 0));
+
+        watchDog.watch();
+
+        await().atMost(3, SECONDS).until(() -> doorControlClient.isLocked());
+        Thread.sleep(DOOR_LOCK_DURATION.plusSeconds(2).toMillis());
+        assertThat(doorControlClient.isLocked(), equalTo(true));
     }
 
     private FaceRecognitionEvent createEvent(final String personId, final long startTime, final long endTime) {

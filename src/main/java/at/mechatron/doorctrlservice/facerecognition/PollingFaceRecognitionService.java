@@ -71,6 +71,9 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
         Set<String> personsNewInView = Sets.difference(currentPersonsInView, personsInViewPreviously);
         Set<String> personsNowOutOfView = Sets.difference(personsInViewPreviously, currentPersonsInView);
 
+        LOG.debug("Persons in view previously: {} Current persons in view: {}", personsInViewPreviously, currentPersonsInView);
+        LOG.info("Persons new in view: {} Persons which went out of view: {}", personsNewInView, personsNowOutOfView);
+
         this.handler.onFaceRecognition(personsNewInView, personsNowOutOfView);
 
         this.personsInViewPreviously = currentPersonsInView;
