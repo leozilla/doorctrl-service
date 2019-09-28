@@ -3,7 +3,7 @@ package at.mechatron.doorctrlservice;
 import at.mechatron.doorctrlservice.doorctrl.DoorControlClient;
 import at.mechatron.doorctrlservice.facerecognition.FaceRecognitionService;
 import at.mechatron.doorctrlservice.facerecognition.PollingFaceRecognitionService;
-import at.mechatron.doorctrlservice.facerecognition.safrapi.FaceRecognitionEvent;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEvent;
 import at.mechatron.doorctrlservice.facerecognition.safrapi.SAFRClient;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -71,7 +71,7 @@ public class ServiceTest {
         }
     }
 
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(ServiceTest.class);
 
     private static final Duration DOOR_LOCK_DURATION = Duration.ofSeconds(5);
 

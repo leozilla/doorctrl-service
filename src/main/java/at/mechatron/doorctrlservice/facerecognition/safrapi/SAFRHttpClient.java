@@ -1,5 +1,7 @@
 package at.mechatron.doorctrlservice.facerecognition.safrapi;
 
+import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEvent;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEventsResponseBody;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.*;
@@ -15,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class SAFRHttpClient implements SAFRClient {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(SAFRHttpClient.class);
 
     private static final String RPC_AUTHORIZATION_HEADER = "X-RPC-AUTHORIZATION";
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
@@ -57,7 +59,7 @@ public class SAFRHttpClient implements SAFRClient {
 
                 LOG.debug("HTTP GET {} returned {}", url, response);
 
-                return mapper.readValue(response, FaceRecognitionEventsResponse.class).getEvents();
+                return mapper.readValue(response, FaceRecognitionEventsResponseBody.class).getEvents();
             } catch (IOException e) {
                 LOG.error("HTTP GET {} failed", url, e);
                 throw new RuntimeException(e);

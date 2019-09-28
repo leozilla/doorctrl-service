@@ -17,10 +17,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class Service {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(Service.class);
 
     public static void main(final String args[]) throws IOException {
         LOG.info("Program args {}", Arrays.asList(args));
+
+        if (args.length != 2) {
+            LOG.fatal("Usage: doorctrl-service [idClass] [relayIPAddress]");
+            System.exit(10);
+        }
 
         final String idClass = args[1];
         final String relayIp = args[2];

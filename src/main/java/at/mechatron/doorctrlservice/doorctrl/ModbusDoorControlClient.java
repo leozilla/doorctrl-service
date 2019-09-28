@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class ModbusDoorControlClient implements DoorControlClient {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(ModbusDoorControlClient.class);
 
     private static final int SLAVE_ID = 1;
 

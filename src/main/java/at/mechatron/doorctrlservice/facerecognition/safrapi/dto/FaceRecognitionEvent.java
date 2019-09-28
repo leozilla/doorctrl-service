@@ -1,4 +1,4 @@
-package at.mechatron.doorctrlservice.facerecognition.safrapi;
+package at.mechatron.doorctrlservice.facerecognition.safrapi.dto;
 
 public class FaceRecognitionEvent {
     private String eventId;

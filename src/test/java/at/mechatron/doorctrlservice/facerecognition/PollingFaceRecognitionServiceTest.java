@@ -1,7 +1,6 @@
 package at.mechatron.doorctrlservice.facerecognition;
 
-import at.mechatron.doorctrlservice.facerecognition.safrapi.FaceRecognitionEvent;
-import com.google.api.client.util.Sets;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;

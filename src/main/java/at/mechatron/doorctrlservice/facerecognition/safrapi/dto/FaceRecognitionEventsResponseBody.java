@@ -1,8 +1,8 @@
-package at.mechatron.doorctrlservice.facerecognition.safrapi;
+package at.mechatron.doorctrlservice.facerecognition.safrapi.dto;
 
 import java.util.List;
 
-public class FaceRecognitionEventsResponse {
+public class FaceRecognitionEventsResponseBody {
     private List<FaceRecognitionEvent> events;
 
     public List<FaceRecognitionEvent> getEvents() {

@@ -1,6 +1,6 @@
 package at.mechatron.doorctrlservice.facerecognition;
 
-import at.mechatron.doorctrlservice.facerecognition.safrapi.FaceRecognitionEvent;
+import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEvent;
 import at.mechatron.doorctrlservice.facerecognition.safrapi.SAFRClient;
 import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class PollingFaceRecognitionService implements FaceRecognitionService {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(PollingFaceRecognitionService.class);
 
     private final Duration pollInterval;
     private final ScheduledExecutorService scheduler;

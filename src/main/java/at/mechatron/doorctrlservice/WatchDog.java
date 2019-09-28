@@ -14,7 +14,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class WatchDog {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LogManager.getLogger(WatchDog.class);
 
     private final Duration doorLockDuration;
     private final DoorControlClient doorControlClient;
