@@ -24,12 +24,12 @@ public class SAFRHttpClient implements SAFRClient {
     private static final ObjectMapper mapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    private final URI EVENTS_URL;
+    private final URI eventsUrl;
     private final HttpRequestFactory httpRequestFactory;
     private final Executor ioExecutor;
 
     public SAFRHttpClient(final String baseUrl, final String authorizationKey, final Duration timeout, final Executor ioExecutor) {
-        this.EVENTS_URL = URI.create(baseUrl);
+        this.eventsUrl = URI.create(String.format("%s/events", baseUrl));
         this.ioExecutor = ioExecutor;
 
         this.httpRequestFactory =
@@ -41,19 +41,21 @@ public class SAFRHttpClient implements SAFRClient {
                             request.setHeaders(headers)
                                     .setConnectTimeout((int) timeout.toMillis())
                                     .setNumberOfRetries(0)
-                                    .setReadTimeout((int) timeout.toMillis());
+                                    .setReadTimeout((int) timeout.toMillis())
+                                    .setWriteTimeout((int) timeout.toMillis());
                         });
     }
 
     public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant startTime) {
-        GenericUrl url = new GenericUrl(String.format("%s/events?sinceTime=%d", EVENTS_URL, startTime.toEpochMilli()));
+        GenericUrl genericUrl = new GenericUrl(String.format("%s?sinceTime=%d", eventsUrl, startTime.toEpochMilli()));
+        String url = genericUrl.build();
 
         LOG.debug("HTTP GET {}", url);
 
         return CompletableFuture.supplyAsync(() -> {
             try {
                 String response = httpRequestFactory
-                        .buildGetRequest(url)
+                        .buildGetRequest(genericUrl)
                         .execute()
                         .parseAsString();
 
