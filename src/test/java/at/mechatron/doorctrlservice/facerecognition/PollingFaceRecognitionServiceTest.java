@@ -21,7 +21,7 @@ class PollingFaceRecognitionServiceTest {
     @BeforeEach
     public void beforeEach() {
         ScheduledExecutorService executor = mock(ScheduledExecutorService.class);
-        this.sut = new PollingFaceRecognitionService(Duration.ofSeconds(3), null, executor, null);
+        this.sut = new PollingFaceRecognitionService("Any", Duration.ofSeconds(3), null, executor, null);
 
         this.handler = mock(FaceRecognitionService.Handler.class);
         this.sut.register(handler);
@@ -117,7 +117,7 @@ class PollingFaceRecognitionServiceTest {
     }
 
     private FaceRecognitionEvent createEvent(final String personId, final long endTime) {
-        return new FaceRecognitionEvent("any id", personId, 0, endTime, "any id class");
+        return new FaceRecognitionEvent("any id", "any source", personId, 0, endTime, "any id class");
     }
 
     private FaceRecognitionEvent createEvent(final String personId, final long startTime, final long endTime) {

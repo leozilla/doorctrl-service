@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class PollingFaceRecognitionService implements FaceRecognitionService {
     private static final Logger LOG = LogManager.getLogger(PollingFaceRecognitionService.class);
 
+    private final String eventsSource;
     private final Duration pollInterval;
     private final ScheduledExecutorService scheduler;
     private final SAFRClient safrClient;
@@ -27,10 +28,12 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
     private Handler handler;
 
     public PollingFaceRecognitionService(
+            final String eventsSource,
             final Duration pollInterval,
             final SAFRClient safrClient,
             final ScheduledExecutorService scheduler,
             final Executor eventLoop) {
+        this.eventsSource = eventsSource;
         this.pollInterval = pollInterval;
         this.scheduler = scheduler;
         this.safrClient = safrClient;
@@ -50,7 +53,7 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
 
         LOG.debug("Polling for face recognition events. Last poll time/used since time: {}", sinceTime);
 
-        safrClient.getEvents(sinceTime).whenCompleteAsync((faceRecognitionEvents, throwable) -> {
+        safrClient.getEvents(eventsSource, sinceTime).whenCompleteAsync((faceRecognitionEvents, throwable) -> {
             if (throwable == null) {
                 this.handleEvents(faceRecognitionEvents);
             } else {

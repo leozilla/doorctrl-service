@@ -54,7 +54,7 @@ public class ServiceTest {
         public List<FaceRecognitionEvent> events;
 
         @Override
-        public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant sinceTime) {
+        public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final String source, final Instant sinceTime) {
             return CompletableFuture.completedFuture(
                     events.stream()
                             .filter(e -> e.getStartTime() < Instant.now().toEpochMilli())
@@ -66,7 +66,7 @@ public class ServiceTest {
 
         private FaceRecognitionEvent hideEndTimeIfInFuture(FaceRecognitionEvent e) {
             return e.getEndTime() > Instant.now().toEpochMilli()
-                    ? new FaceRecognitionEvent(e.getEventId(), e.getPersonId(), e.getStartTime(), 0, e.getIdClass())
+                    ? new FaceRecognitionEvent(e.getEventId(), e.getSource(), e.getPersonId(), e.getStartTime(), 0, e.getIdClass())
                     : e;
         }
     }
@@ -98,6 +98,7 @@ public class ServiceTest {
                 .build());
 
         final FaceRecognitionService faceRecognitionService = new PollingFaceRecognitionService(
+                "any camera",
                 Duration.ofMillis(500),
                 safrHttpClient,
                 scheduler,
@@ -209,6 +210,6 @@ public class ServiceTest {
     }
 
     private FaceRecognitionEvent createEvent(final String personId, final long startTime, final long endTime) {
-        return new FaceRecognitionEvent("any id", personId, startTime, endTime, "any id class");
+        return new FaceRecognitionEvent("any id", "any camera", personId, startTime, endTime, "any id class");
     }
 }

@@ -4,8 +4,12 @@ import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionE
 import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEventsResponseBody;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.*;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.base.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,7 +18,8 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 public class SAFRHttpClient implements SAFRClient {
     private static final Logger LOG = LogManager.getLogger(SAFRHttpClient.class);
@@ -46,8 +51,14 @@ public class SAFRHttpClient implements SAFRClient {
                         });
     }
 
-    public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final Instant startTime) {
-        GenericUrl genericUrl = new GenericUrl(String.format("%s?sinceTime=%d", eventsUrl, startTime.toEpochMilli()));
+    public CompletableFuture<List<FaceRecognitionEvent>> getEvents(final String sourceId, final Instant startTime) {
+        String rawUrl = String.format("%s?sinceTime=%d", eventsUrl, startTime.toEpochMilli());
+
+        if (!Strings.isNullOrEmpty(sourceId)) {
+            rawUrl = String.format("%s&source=%s", rawUrl, sourceId);
+        }
+
+        GenericUrl genericUrl = new GenericUrl(rawUrl);
         String url = genericUrl.build();
 
         LOG.debug("HTTP GET {}", url);

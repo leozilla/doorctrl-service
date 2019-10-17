@@ -24,6 +24,14 @@ public enum ApplicationProperties {
         return properties.getProperty("base-url");
     }
 
+    public String getEventsSource() {
+        return properties.getProperty("events-source-filter");
+    }
+
+    public String getRelayIpAddress() {
+        return properties.getProperty("relay-IP");
+    }
+
     public String getAuthorizationKey() {
         return properties.getProperty("authorization-key");
     }

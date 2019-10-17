@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,25 +19,17 @@ public class Service {
     private static final Logger LOG = LogManager.getLogger(Service.class);
 
     public static void main(final String args[]) throws IOException {
-        LOG.info("Program args {}", Arrays.asList(args));
-
-        if (args.length != 2) {
-            LOG.fatal("Usage: doorctrl-service [idClass] [relayIPAddress]");
-            System.exit(10);
-        }
-
-        final String idClass = args[0];
-        final String relayIp = args[1];
-
         ApplicationProperties.INSTANCE.load();
 
         final String baseUrl = ApplicationProperties.INSTANCE.getBaseUrl();
+        final String relayIp = ApplicationProperties.INSTANCE.getRelayIpAddress();
+        final String eventsSource = ApplicationProperties.INSTANCE.getEventsSource();
         final String authorizationKey = ApplicationProperties.INSTANCE.getAuthorizationKey();
         final Duration doorLockDuration = ApplicationProperties.INSTANCE.getDoorLockDuration().orElse(Duration.ofMinutes(2));
         final Duration httpPollInterval = ApplicationProperties.INSTANCE.getHttpPoolInterval().orElse(Duration.ofMillis(1500));
 
-        LOG.info("Event ID Class: {}", idClass);
         LOG.info("Relay IP Address: {}", relayIp);
+        LOG.info("Events Source: {}", eventsSource);
         LOG.info("Base URL: {}", baseUrl);
         LOG.info("Door lock duration: {}", doorLockDuration);
         LOG.info("HTTP poll interval: {}", httpPollInterval);
@@ -77,6 +68,7 @@ public class Service {
 
         final DoorControlClient doorControlClient = new ModbusDoorControlClient(relayIp, modbusIOExecutor);
         final FaceRecognitionService faceRecognitionService = new PollingFaceRecognitionService(
+                eventsSource,
                 httpPollInterval,
                 new SAFRHttpClient(baseUrl, authorizationKey, httpPollInterval, safrHttpIOExecutor),
                 scheduler,
