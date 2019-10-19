@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Service {
     private static final Logger LOG = LogManager.getLogger(Service.class);
@@ -44,7 +45,15 @@ public class Service {
             System.exit(11);
         }
 
-        final Thread.UncaughtExceptionHandler handler = (thread, throwable) -> LOG.fatal("Thread terminated", throwable);
+        AtomicReference<DoorControlClient> clientRef = new AtomicReference<>();
+        final Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            LOG.fatal("Thread terminated", throwable);
+            DoorControlClient client = clientRef.get();
+            if (client != null) {
+                LOG.info("Looking door for security reasons");
+                client.lockDoor();
+            }
+        };
         final Executor eventLoop = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
                 .setDaemon(false)
                 .setNameFormat("EventLoop")
@@ -67,6 +76,7 @@ public class Service {
                 .build());
 
         final DoorControlClient doorControlClient = new ModbusDoorControlClient(relayIp, modbusIOExecutor);
+        clientRef.set(doorControlClient);
         final FaceRecognitionService faceRecognitionService = new PollingFaceRecognitionService(
                 eventsSource,
                 httpPollInterval,
