@@ -2,6 +2,7 @@ package at.mechatron.doorctrlservice.facerecognition;
 
 import at.mechatron.doorctrlservice.facerecognition.safrapi.dto.FaceRecognitionEvent;
 import at.mechatron.doorctrlservice.facerecognition.safrapi.SAFRClient;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,6 +71,13 @@ public class PollingFaceRecognitionService implements FaceRecognitionService {
 
         List<FaceRecognitionEvent> sortedEvents = faceRecognitionEvents.stream()
                 .sorted(Comparator.comparing(FaceRecognitionEvent::getStartTime, Comparator.reverseOrder()))
+                .filter(e -> {
+                    boolean unknownPerson = Strings.isNullOrEmpty(e.getPersonId());
+                    if (unknownPerson) {
+                        LOG.warn("Event {} for source {} contains no personId. Ignoring event.", e.getEventId(), e.getSourceId());
+                    }
+                    return !unknownPerson;
+                })
                 .collect(Collectors.groupingBy(p -> p.getPersonId()))
                 .entrySet()
                 .stream()
