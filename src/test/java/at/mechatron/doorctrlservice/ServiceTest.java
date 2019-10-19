@@ -66,7 +66,7 @@ public class ServiceTest {
 
         private FaceRecognitionEvent hideEndTimeIfInFuture(FaceRecognitionEvent e) {
             return e.getEndTime() > Instant.now().toEpochMilli()
-                    ? new FaceRecognitionEvent(e.getEventId(), e.getSource(), e.getPersonId(), e.getStartTime(), 0, e.getIdClass())
+                    ? new FaceRecognitionEvent(e.getEventId(), e.getSourceId(), e.getPersonId(), e.getStartTime(), 0, e.getIdClass())
                     : e;
         }
     }

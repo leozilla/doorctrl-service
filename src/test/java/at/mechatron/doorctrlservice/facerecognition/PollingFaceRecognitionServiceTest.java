@@ -121,6 +121,6 @@ class PollingFaceRecognitionServiceTest {
     }
 
     private FaceRecognitionEvent createEvent(final String personId, final long startTime, final long endTime) {
-        return new FaceRecognitionEvent("any id", personId, startTime, endTime, "any id class");
+        return new FaceRecognitionEvent("any id", "any source", personId, startTime, endTime, "any id class");
     }
 }

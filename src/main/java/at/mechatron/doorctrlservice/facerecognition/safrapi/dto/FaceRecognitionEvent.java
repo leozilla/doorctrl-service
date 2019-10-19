@@ -2,7 +2,7 @@ package at.mechatron.doorctrlservice.facerecognition.safrapi.dto;
 
 public class FaceRecognitionEvent {
     private String eventId;
-    private String source;
+    private String sourceId;
     private String personId;
     private long startTime;
     private long endTime;
@@ -11,9 +11,9 @@ public class FaceRecognitionEvent {
     public FaceRecognitionEvent() {
     }
 
-    public FaceRecognitionEvent(String eventId, String source, String personId, long startTime, long endTime, String idClass) {
+    public FaceRecognitionEvent(String eventId, String sourceId, String personId, long startTime, long endTime, String idClass) {
         this.eventId = eventId;
-        this.source = source;
+        this.sourceId = sourceId;
         this.personId = personId;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -24,8 +24,8 @@ public class FaceRecognitionEvent {
         return eventId;
     }
 
-    public String getSource() {
-        return source;
+    public String getSourceId() {
+        return sourceId;
     }
 
     public String getPersonId() {
