@@ -20,7 +20,13 @@ public class SAFRHttpClientTestClient {
 
         while (true) {
             // client.getEvents(eventsSource, Instant.now().minusSeconds(60 * 60 * 120));
-            client.getEvents(eventsSource, Instant.now().minusSeconds(5));
+            client.getEvents(eventsSource, Instant.now().minusSeconds(5)).whenComplete((events, throwable) -> {
+                if (throwable != null) {
+                    throwable.printStackTrace();
+                } else {
+                    System.out.println(events.size() + " events");
+                }
+            });
 
             String line = scanner.nextLine();
             if (line.contains("n")) System.exit(0);
